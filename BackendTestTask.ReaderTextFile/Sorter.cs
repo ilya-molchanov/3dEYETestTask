@@ -2,7 +2,7 @@
 
 namespace BackendTestTask.ReaderTextFile
 {
-    internal class Sorter
+    public class Sorter
     {
         private class RowState
         {
@@ -11,35 +11,39 @@ namespace BackendTestTask.ReaderTextFile
             public StreamReader Reader { get; set; }
         }
 
-        public async Task Sort(string fileName, int partLinesCount)
+        public async Task Sort(string fileName, string folderName, int partLinesCount)
         {
             // Split input file into 100 MB pieces
-            var files = SplitFile(fileName, partLinesCount);
+            var files = SplitFile(fileName, folderName, partLinesCount);
 
             // Sort each part
             SortParts(files);
 
             // Combine the sorted parts
-            MergeSortedFilesIntoOutputFile(files);
+            MergeSortedFilesIntoOutputFile(files, folderName);
         }
 
         /// <summary>
         /// Splitting a file into pieces of a specified size
         /// </summary>
         /// <param name="fileName">File to split</param>
+        /// <param name="folderName">Folder contains a given file</param>
         /// <param name="partLinesCount">The number of lines that should be in each splitted file. 
-        /// Default number (1024 * 1024 * 4.5) stands for approximately 100Mb size.</param>
+        /// Default number (1024 * 1024 * 4.5) stands for approximately 100Mb size</param>
         /// <returns>Array of splitted files with appropriate paths</returns>
-        private string[] SplitFile(string fileName, int partLinesCount)
+        private string[] SplitFile(string fileName, string folderName, int partLinesCount)
         {
             var list = new List<string>();
-            using (StreamReader streamReader = new StreamReader(fileName))
+
+            var filePath = Path.Combine(ApplicationHelper.TryGetSolutionDirectoryInfo().FullName, folderName, fileName);
+
+            using (StreamReader streamReader = new StreamReader(filePath))
             {
                 int partNumber = 0;
                 while (!streamReader.EndOfStream)
                 {
                     partNumber++;
-                    var partFileName = Path.Combine(ApplicationHelper.TryGetSolutionDirectoryInfo().FullName, "tmp", string.Format("{0}.txt", partNumber));
+                    var partFileName = Path.Combine(ApplicationHelper.TryGetSolutionDirectoryInfo().FullName, folderName, string.Format("{0}.txt", partNumber));
                     list.Add(partFileName);
 
                     using (StreamWriter writer = new StreamWriter(partFileName))
@@ -77,11 +81,12 @@ namespace BackendTestTask.ReaderTextFile
         /// Merge a given array of splitted files into an output file with a final sorting
         /// </summary>
         /// <param name="files">A given array of splitted files to combine and sort.</param>
-        private void MergeSortedFilesIntoOutputFile(string[] files)
+        /// <param name="folderName">A given folder for output file</param>
+        private void MergeSortedFilesIntoOutputFile(string[] files, string folderName)
         {
             var readers = files.Select(x => new StreamReader(x)).ToArray();
 
-            var resultFileName = Path.Combine(ApplicationHelper.TryGetSolutionDirectoryInfo().FullName, "tmp", "result.txt");
+            var resultFileName = Path.Combine(ApplicationHelper.TryGetSolutionDirectoryInfo().FullName, folderName, "result.txt");
 
             try
             {
