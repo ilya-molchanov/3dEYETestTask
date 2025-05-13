@@ -8,7 +8,7 @@ namespace BackendTestTask.ReaderTextFile
         {
             Sorter sorter = new Sorter();
 
-            await sorter.Sort("abc.txt", "tmp", (int)(1024 * 1024 * 4.5));
+            await sorter.Sort("input.txt", "tmp", (int)(1024 * 1024 * 4.5));
         }
     }
 }

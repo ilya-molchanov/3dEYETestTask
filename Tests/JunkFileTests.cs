@@ -1,5 +1,6 @@
 ﻿using BackendTestTask.Internal;
 using BackendTestTask.ReaderTextFile;
+using System.Text.RegularExpressions;
 
 namespace Tests
 {
@@ -7,30 +8,45 @@ namespace Tests
     public sealed class JunkFileTests
     {
         [TestMethod]
-        public void JunkFile_EqualsInputOutputFilesTest()
+        public void JunkFile_EqualsInputIntermediateOutputFilesTest()
         {
-            var lineCountInputFile = File.ReadLines(Path.Combine(ApplicationHelper.TryGetSolutionDirectoryInfo().FullName, "TestFiles", "test.txt")).Count();
+            var linesCountInputFile = File.ReadLines(Path.Combine(ApplicationHelper.TryGetSolutionDirectoryInfo().FullName, "TestFiles", "input.txt")).Count();
+
+            int partLinesCount = 10000;
 
             Sorter sorter = new Sorter();
 
-            var result = sorter.Sort("test.txt", "TestFiles", 10);
+            var result = sorter.Sort("input.txt", "TestFiles", partLinesCount);
 
             result.Wait();
 
-            var lineCountOutputFile = File.ReadLines(Path.Combine(ApplicationHelper.TryGetSolutionDirectoryInfo().FullName, "TestFiles", "result.txt")).Count();
-
-            Assert.IsTrue(lineCountInputFile == lineCountOutputFile, "Actual number of strings '{0}' differs from expected one '{1}'.", lineCountOutputFile, lineCountInputFile);
-
-            string[] filePaths = Directory.GetFiles(Path.Combine(ApplicationHelper.TryGetSolutionDirectoryInfo().FullName, "TestFiles"));
-            foreach (string filePath in filePaths)
+            int intermediateFilesCount = linesCountInputFile / partLinesCount;
+            if (linesCountInputFile % partLinesCount > 0)
             {
-                var name = new FileInfo(filePath).Name;
-                name = name.ToLower();
-                if (name != "test.txt")
-                {
-                    File.Delete(filePath);
-                }
+                intermediateFilesCount++;
             }
+
+            string[] intermediateFilesPaths = Directory.GetFiles(
+                Path.Combine(ApplicationHelper.TryGetSolutionDirectoryInfo().FullName, "TestFiles"))
+                .Where(path => Regex.IsMatch(Path.GetFileName(path), @"^\d\.txt$")).ToArray();
+
+            int intermediateFilesLinesCount = 0;
+            foreach (string intermediateFilePath in intermediateFilesPaths)
+            {
+                intermediateFilesLinesCount += File.ReadLines(intermediateFilePath).Count();
+            }
+
+            var linesCountOutputFile = File.ReadLines(Path.Combine(ApplicationHelper.TryGetSolutionDirectoryInfo().FullName, "TestFiles", "result.txt")).Count();
+
+            Assert.IsTrue(linesCountInputFile == intermediateFilesLinesCount, "Actual number of strings within intermediate files '{0}' differs from expected one '{1}'.", intermediateFilesLinesCount, linesCountInputFile);
+
+            Assert.IsTrue(linesCountInputFile == linesCountOutputFile, "Actual number of strings in output file '{0}' differs from expected one '{1}'.", linesCountOutputFile, linesCountInputFile);
+
+            foreach (string intermediateFilePath in intermediateFilesPaths)
+            {
+                File.Delete(intermediateFilePath);
+            }
+            File.Delete(Path.Combine(ApplicationHelper.TryGetSolutionDirectoryInfo().FullName, "TestFiles", "result.txt"));
         }
     }
 }

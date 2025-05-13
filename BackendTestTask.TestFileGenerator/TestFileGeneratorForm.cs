@@ -56,24 +56,25 @@ namespace BackendTestTask.TestFileGenerator
                 // progressbar async await c#
                 await Task.Run(() => ProcessData(progress)); // c# task
 
-                Thread.Sleep(500);
-                lblStatus.Text = "";
-                progressBar1.Value = 0;
-                runningApp = false;
                 cancellationTokenSource = null;
-                btnGenerate.Text = "Generate Test File";
-                tbGigabytesCount.Text = "1";
+                Thread.Sleep(500);
+                CleanUI();
             }
             else
             {
                 cancellationTokenSource.Cancel();
-                Thread.Sleep(1000);                
-                progressBar1.Value = 0;
-                lblStatus.Text = "";
-                btnGenerate.Text = "Generate Test File";
-                runningApp = false;
-                tbGigabytesCount.Text = "1";
+                Thread.Sleep(1000);
+                CleanUI();
             }
+        }
+
+        private void CleanUI()
+        {
+            btnGenerate.Text = "Generate Test File";
+            tbGigabytesCount.Text = "1";
+            runningApp = false;
+            progressBar1.Value = 0;
+            lblStatus.Text = "";
         }
 
         private Task ProcessData(IProgress<int> progress)
@@ -92,7 +93,7 @@ namespace BackendTestTask.TestFileGenerator
 
                 long iterations = desiredLinesForGigabyte;
 
-                var filePath = Path.Combine(ApplicationHelper.TryGetSolutionDirectoryInfo().FullName, "tmp", "abc.txt");
+                var filePath = Path.Combine(ApplicationHelper.TryGetSolutionDirectoryInfo().FullName, "tmp", "input.txt");
 
                 double previousPercent = 0;
 
